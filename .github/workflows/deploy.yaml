@@ -1,0 +1,38 @@
+name: deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - <branch_name>
+
+env:
+  AZURE_FUNCTION_APP_PACKAGE_PATH: '.' # set this to the path to your web app project, defaults to the repository root
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: 'Install Dependencies'
+        shell: bash
+        run: |
+          pushd './${{ env.AZURE_FUNCTION_APP_PACKAGE_PATH }}'
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          popd
+
+      - name: Run Azure Functions Action
+        uses: Azure/functions-action@v1
+        with:
+          app-name: az-function-time-trigger-demo
+          package: ${{ env.AZURE_FUNCTION_APP_PACKAGE_PATH }}
+          publish-profile: ${{ secrets.AZURE_FUNCTION_APP_PUBLISH_PROFILE }}
